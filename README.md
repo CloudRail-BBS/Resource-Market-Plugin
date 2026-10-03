@@ -26,16 +26,13 @@ this plugin does not use them.
 
 ## Installation
 
-Pin the destination directory — it must match the plugin name declared in
-`plugin.rb`:
-
 ```yaml
 hooks:
   after_code:
     - exec:
         cd: $home/plugins
         cmd:
-          - git clone https://github.com/your-org/discourse-resource-hub.git discourse-resource-hub
+          - git clone https://github.com/CloudRail-BBS/Resource-Market-Plugin.git discourse-resource-hub
 ```
 
 Then rebuild:
@@ -44,7 +41,22 @@ Then rebuild:
 ./launcher rebuild app
 ```
 
-For local development, clone into `plugins/` and restart `bin/ember-cli -u`.
+For local development:
+
+```bash
+cd plugins
+git clone https://github.com/CloudRail-BBS/Resource-Market-Plugin.git discourse-resource-hub
+```
+
+…then restart `bin/ember-cli -u`.
+
+> **The clone destination is not optional.** Discourse identifies a plugin by the
+> directory name under `plugins/`, and that name must match `# name:` in
+> `plugin.rb` — here, `discourse-resource-hub`. This repository is called
+> `Resource-Market-Plugin`, so a plain
+> `git clone https://github.com/CloudRail-BBS/Resource-Market-Plugin.git`
+> produces `plugins/Resource-Market-Plugin/` and the plugin will silently fail to
+> load. Always pass the trailing destination directory, as above.
 
 ## Configuration
 
@@ -212,4 +224,4 @@ The frontend targets Discourse's current `main`, which means:
 
 ## Licence
 
-MIT
+MIT — see [LICENSE](LICENSE).

@@ -5,8 +5,9 @@
 # meta_topic_id: 0
 # version: 1.0.0
 # authors: Resource Hub Contributors
-# url: https://github.com/your-org/discourse-resource-hub
+# url: https://github.com/CloudRail-BBS/Resource-Market-Plugin
 # required_version: 3.4.0
+# license: MIT
 
 enabled_site_setting :resource_hub_enabled
 
