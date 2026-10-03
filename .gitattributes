@@ -1,0 +1,10 @@
+# Normalise line endings so RuboCop and Prettier agree between Windows and CI.
+* text=auto eol=lf
+
+# Binary artefacts must never be normalised.
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary

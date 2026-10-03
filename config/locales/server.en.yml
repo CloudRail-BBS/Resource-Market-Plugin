@@ -1,0 +1,29 @@
+en:
+  site_settings:
+    resource_hub_enabled: "Enable the Resource Hub plugin."
+    resource_hub_nav_link: "Show a Resource Hub link in the site navigation."
+    resource_hub_title: "Title displayed at the top of the Resource Hub."
+    resource_hub_description: "Short description displayed under the Resource Hub title."
+    resource_hub_max_file_size_kb: "Maximum size (in KB) of a single uploaded resource file."
+    resource_hub_authorized_extensions: "Pipe separated allow-list of extensions the hub accepts. Uploads must also be permitted by the core 'authorized_extensions' setting."
+    resource_hub_count_downloads: "Serve downloads through the hub endpoint so the download counter is incremented."
+    resource_hub_upload_allowed_groups: "Groups allowed to upload resources. Leave empty to allow any logged in user."
+    resource_hub_auto_approve_groups: "Groups whose uploads are published immediately. Other members' submissions stay pending until a staff member approves them."
+    resource_hub_github_enabled: "Enable GitHub repository integration for the Resource Hub."
+    resource_hub_github_token: "Optional GitHub personal access token. Raises the API limit from 60 to 5000 requests per hour. A read-only token is sufficient."
+    resource_hub_github_sync_hours: "How often (in hours) to refresh linked GitHub repositories. Set to 0 to disable the scheduled sync."
+    resource_hub_github_import_releases: "Import GitHub releases that carry downloadable assets."
+    resource_hub_github_max_releases: "Maximum number of releases to import per repository, per sync."
+    resource_hub_github_topics: "Pipe separated list of repository topics to keep when importing a repository."
+
+  resource_hub:
+    errors:
+      resource_not_found: "That resource does not exist."
+      invalid_upload: "The uploaded file is not valid."
+      title_required: "A title is required."
+      comment_required: "A comment cannot be empty."
+      invalid_repo: "That does not look like a valid GitHub repository."
+      repo_not_found: "Repository not found on GitHub."
+      rate_limited: "GitHub API rate limit reached. Try again later, or configure an access token."
+      github_error: "GitHub returned an error: %{message}"
+      already_linked: "That repository is already linked to a resource."

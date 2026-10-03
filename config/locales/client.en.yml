@@ -1,0 +1,95 @@
+en:
+  admin_js:
+    admin:
+      site_settings:
+        categories:
+          plugins: "Plugins"
+  js:
+    resource_hub:
+      title: "Resource Hub"
+      nav_title: "Resources"
+
+      # `tabs.<name>` and `empty.<name>` are resolved dynamically from the active
+      # tab, so every variant must exist.
+      tabs:
+        all: "All"
+        files: "Files"
+        repositories: "Repositories"
+        mine: "My uploads"
+
+      search:
+        placeholder: "Search resources..."
+
+      sort:
+        newest: "Newest"
+        popular: "Most downloaded"
+        name: "Name"
+
+      actions:
+        upload: "Upload resource"
+        download: "Download"
+        link_repo: "Link this repository"
+        sync: "Sync now"
+        delete: "Delete"
+        cancel: "Cancel"
+        visit: "View on GitHub"
+        load_more: "Load more"
+
+      form:
+        title: "Upload a resource"
+        name: "Name"
+        name_placeholder: "e.g. Discourse Data Explorer"
+        description: "Description"
+        description_placeholder: "What does this resource do?"
+        category: "Category"
+        version: "Version"
+        tags: "Tags"
+        tags_placeholder: "comma, separated, tags"
+        file: "File"
+        drop_hint: "Drop a file here, or click to browse"
+        remove_file: "Remove file"
+        repo_url: "GitHub repository"
+        repo_placeholder: "https://github.com/owner/repo"
+        submit: "Publish resource"
+
+      types:
+        file: "File"
+        repository: "Repository"
+
+      fields:
+        version: "Version"
+        downloads: "Downloads"
+        uploaded_by: "Uploaded by"
+
+      status:
+        pending: "Pending review"
+        rejected: "Rejected"
+
+      empty:
+        all: "The Resource Hub is empty. Be the first to share something!"
+        files: "No files have been uploaded yet."
+        repositories: "No GitHub repositories have been linked yet."
+        mine: "You have not uploaded any resources yet."
+
+      errors:
+        generic: "Something went wrong. Please try again."
+        title_required: "Please enter a name."
+        file_required: "Please choose a file to upload."
+        repo_required: "Please enter a GitHub repository."
+        upload_failed: "Upload failed: %{message}"
+        github_failed: "Could not reach GitHub: %{message}"
+        forbidden: "You are not allowed to do that."
+
+      comments:
+        title: "Comments"
+        placeholder: "Leave a comment..."
+        submit: "Post comment"
+        empty: "No comments yet."
+        delete: "Delete comment"
+        confirm_delete: "Delete this comment?"
+
+      confirm_delete: "Are you sure you want to delete this resource? This cannot be undone."
+
+      repo:
+        releases: "Releases"
+        no_releases: "This repository has no published releases."

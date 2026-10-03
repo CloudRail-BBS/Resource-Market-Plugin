@@ -1,0 +1,81 @@
+# frozen_string_literal: true
+
+plugins:
+  resource_hub_enabled:
+    default: true
+    client: true
+
+  resource_hub_nav_link:
+    default: true
+    client: true
+
+  resource_hub_title:
+    default: "Resource Hub"
+    client: true
+
+  resource_hub_description:
+    default: "Download community resources, or upload your own."
+    client: true
+
+  # Maximum size, in KB, of a single uploaded resource file.
+  resource_hub_max_file_size_kb:
+    default: 20480
+    client: true
+
+  # Pipe separated allow-list of extensions the hub will accept.
+  #
+  # This is an *additional* restriction on top of Discourse's own
+  # `authorized_extensions` setting: an upload must be permitted by both. To
+  # distribute executables or installers you must widen BOTH this setting and
+  # Admin -> Settings -> Files -> authorized_extensions.
+  resource_hub_authorized_extensions:
+    default: "zip|tar|gz|7z|rar|pdf|txt|md|json|xml|yaml|yml|csv|xlsx|docx|pptx|png|jpg|jpeg|gif|webp|svg|mp3|mp4|wav"
+    client: true
+
+  # When enabled, downloads are served through the hub's endpoint so the
+  # download counter is incremented.
+  resource_hub_count_downloads:
+    default: true
+
+  # Groups allowed to upload resources. Empty means "any logged in user".
+  resource_hub_upload_allowed_groups:
+    default: ""
+    type: group_list
+    allow_any: false
+
+  # Groups whose uploads are published immediately. Everyone else's submissions
+  # go into a pending state until a staff member approves them.
+  # 3 is Discourse's built-in "staff" group.
+  resource_hub_auto_approve_groups:
+    default: "3"
+    type: group_list
+    allow_any: false
+
+  # ----------------------------------------------------------------
+  # GitHub integration
+  # ----------------------------------------------------------------
+  resource_hub_github_enabled:
+    default: true
+    client: true
+
+  # Optional personal access token. Raises the GitHub API limit from 60 to 5000
+  # requests per hour. A read-only (public repository) token is sufficient.
+  resource_hub_github_token:
+    default: ""
+    secret: true
+
+  # Sync interval in hours. Set to 0 to disable the scheduled sync.
+  resource_hub_github_sync_hours:
+    default: 6
+
+  # Automatically import GitHub releases that carry downloadable assets.
+  resource_hub_github_import_releases:
+    default: true
+
+  # Maximum number of releases imported per repository, per sync.
+  resource_hub_github_max_releases:
+    default: 5
+
+  # Pipe separated list of repository topics to keep when importing a repo.
+  resource_hub_github_topics:
+    default: "discourse-plugin|discourse-theme|discourse"
