@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module ::DiscourseResourceHub
-  class CommentSerializer < ActiveModel::Serializer
+  class CommentSerializer < ::ApplicationSerializer
     attributes :id, :raw, :cooked, :username, :user_id, :created_at, :can_delete
 
     def username

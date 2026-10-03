@@ -1,7 +1,10 @@
 # frozen_string_literal: true
 
 module ::DiscourseResourceHub
-  class ResourceSerializer < ActiveModel::Serializer
+  # Extends Discourse's ApplicationSerializer, not ActiveModel::Serializer
+  # directly — that is what every core serializer does, and it is the base that
+  # `ApplicationController#serialize_data` is written against.
+  class ResourceSerializer < ::ApplicationSerializer
     attributes :id,
                :title,
                :description,

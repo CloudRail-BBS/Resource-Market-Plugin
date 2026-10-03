@@ -107,9 +107,13 @@ export default class ResourceHubIndexController extends Controller {
   @action
   async download(resource) {
     try {
-      const result = await ajax(`/resource-hub/resources/${resource.id}/download.json`, {
-        type: "POST",
-      });
+      // Keyed by slug, not id — ResourcesController#fetch_resource accepts
+      // either, and a payload without `id` would otherwise request
+      // /resource-hub/resources/undefined/download.json.
+      const result = await ajax(
+        `/resource-hub/resources/${resource.slug ?? resource.id}/download.json`,
+        { type: "POST" }
+      );
       if (result.redirect_url) {
         window.open(result.redirect_url, "_blank", "noopener,noreferrer");
       }

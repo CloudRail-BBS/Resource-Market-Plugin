@@ -17,12 +17,24 @@ export default class ResourceHubShowController extends Controller {
   @tracked newComment = "";
   @tracked posting = false;
 
+  // Build resource URLs from the SLUG, not the numeric id.
+  //
+  // ResourcesController#fetch_resource resolves a slug or a numeric id, and
+  // `slug` is always present in the payload — whereas a payload missing `id`
+  // silently produces `/resource-hub/resources/undefined.json`, which 404s with
+  // "The requested URL or resource could not be found." A slug can never be
+  // `undefined`, so this removes the whole failure mode.
+  get resourceKey() {
+    return this.resource?.slug ?? this.resource?.id;
+  }
+
   @action
   async download() {
     try {
-      const result = await ajax(`/resource-hub/resources/${this.resource.id}/download.json`, {
-        type: "POST",
-      });
+      const result = await ajax(
+        `/resource-hub/resources/${this.resourceKey}/download.json`,
+        { type: "POST" }
+      );
       if (result.redirect_url) {
         window.open(result.redirect_url, "_blank", "noopener,noreferrer");
       }
@@ -44,10 +56,10 @@ export default class ResourceHubShowController extends Controller {
     }
     this.posting = true;
     try {
-      const result = await ajax(`/resource-hub/resources/${this.resource.id}/comments.json`, {
-        type: "POST",
-        data: { raw: this.newComment },
-      });
+      const result = await ajax(
+        `/resource-hub/resources/${this.resourceKey}/comments.json`,
+        { type: "POST", data: { raw: this.newComment } }
+      );
       this.comments = [...this.comments, result.comment];
       this.newComment = "";
     } catch (error) {
@@ -64,7 +76,7 @@ export default class ResourceHubShowController extends Controller {
     }
     try {
       await ajax(
-        `/resource-hub/resources/${this.resource.id}/comments/${comment.id}.json`,
+        `/resource-hub/resources/${this.resourceKey}/comments/${comment.id}.json`,
         { type: "DELETE" }
       );
       this.comments = this.comments.filter((c) => c.id !== comment.id);
@@ -79,7 +91,7 @@ export default class ResourceHubShowController extends Controller {
       return;
     }
     try {
-      await ajax(`/resource-hub/resources/${this.resource.id}.json`, { type: "DELETE" });
+      await ajax(`/resource-hub/resources/${this.resourceKey}.json`, { type: "DELETE" });
       this.router.transitionTo("resource-hub.index");
     } catch (error) {
       popupAjaxError(error);
