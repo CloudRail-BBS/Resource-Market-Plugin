@@ -1,6 +1,15 @@
 # frozen_string_literal: true
 
-plugins:
+# The top-level key is the settings CATEGORY (it groups these under one heading
+# in Admin -> Settings). Every official plugin names it after itself — see
+# discourse-solved's `discourse_solved:` and discourse-data-explorer's
+# `discourse_data_explorer:`.
+#
+# Do NOT use `plugins:` here. That is core's own category, so the settings end up
+# filed under it instead of their own group, and it forces you to override
+# `admin_js.admin.site_settings.categories.plugins` in the client locale just to
+# relabel core's heading.
+resource_hub:
   resource_hub_enabled:
     default: true
     client: true
@@ -11,7 +20,7 @@ plugins:
 
   # 这两个默认值会直接显示在页面上，所以使用中文。
   # 注意：已经保存过的站点设置不会被默认值覆盖，升级后若要生效需在后台
-  # 「设置 → 插件」里重置这两项。
+  # 「设置 → 插件 → 资源中心」里重置这两项。
   resource_hub_title:
     default: "资源中心"
     client: true

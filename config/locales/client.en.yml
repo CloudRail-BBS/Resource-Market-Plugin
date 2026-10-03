@@ -13,7 +13,9 @@ en:
     admin:
       site_settings:
         categories:
-          plugins: "插件"
+          # Must match the top-level key in config/settings.yml. Do NOT override
+          # core's `plugins` category — that relabels Discourse's own heading.
+          resource_hub: "资源中心"
   js:
     resource_hub:
       title: "资源中心"

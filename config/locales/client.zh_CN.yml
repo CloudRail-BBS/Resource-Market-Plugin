@@ -3,7 +3,9 @@ zh_CN:
     admin:
       site_settings:
         categories:
-          plugins: "插件"
+          # 必须与 config/settings.yml 的顶层键一致。
+          # 不要覆盖核心的 `plugins` 分类，那会改掉 Discourse 自己的标题。
+          resource_hub: "资源中心"
   js:
     resource_hub:
       title: "资源中心"
