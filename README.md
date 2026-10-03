@@ -200,9 +200,19 @@ the children have nowhere to render and the page comes up blank:
 resolves to `/resource-hub/r/:slug`, matching the server routes in
 `config/routes.rb`.
 
-The hub is reachable from both navigation surfaces: `addCommunitySectionLink`
-(sidebar, the default `navigation_menu`) and `addNavigationBarItem`
-(`header`/`legacy`).
+**4. A nav item's `name` becomes a CSS class.** `NavigationItem` renders
+`content.name` verbatim on the generated `<li>`
+(`dConcatClass(..., this.content.name)`), so a nav item named `resource-hub`
+produces `<li class="... resource-hub">`. That collides with this plugin's own
+page-level `.resource-hub` rule — and because that rule sets `margin: 0 auto`,
+which absorbs all the free space in the nav bar's flex row, it stretched the
+entire navigation bar. Two guards are in place:
+
+- the nav item is named `resource-hub-link`, keeping the two namespaces apart;
+- the page root rule is qualified as `div.resource-hub`, so it can only ever
+  match the page container, never an `<li>`.
+
+The hub is surfaced in the header navigation bar, via `addNavigationBarItem`.
 
 ### Request flow
 

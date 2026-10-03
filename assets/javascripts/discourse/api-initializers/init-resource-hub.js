@@ -1,10 +1,6 @@
 import { apiInitializer } from "discourse/lib/api";
 import { i18n } from "discourse-i18n";
 
-// Route name of the hub landing page, as declared in
-// `assets/javascripts/discourse/resource-hub-route-map.js`.
-const HUB_ROUTE = "resource-hub.index";
-
 export default apiInitializer((api) => {
   const siteSettings = api.container.lookup("service:site-settings");
 
@@ -12,24 +8,21 @@ export default apiInitializer((api) => {
     return;
   }
 
-  // Discourse has two navigation surfaces and a forum renders one or the other
-  // depending on the `navigation_menu` site setting:
+  // The hub is surfaced in the header navigation bar only.
   //
-  //   sidebar (the default since 3.2) -> community section links
-  //   header / legacy                 -> navigation bar items
+  // IMPORTANT: `name` is not just an identifier. Discourse's `NavigationItem`
+  // renders it verbatim as a class on the generated `<li>`:
   //
-  // Registering only a nav bar item leaves the hub with no visible entry point
-  // on any forum using the default sidebar menu, so register on both.
-  api.addCommunitySectionLink({
-    name: "resource-hub",
-    route: HUB_ROUTE,
-    title: i18n("resource_hub.title"),
-    text: i18n("resource_hub.nav_title"),
-    icon: "book-open",
-  });
-
+  //   <li class={{dConcatClass (if this.active "active") ... this.content.name}}>
+  //
+  // A nav item named "resource-hub" therefore produced
+  // `<li class="... resource-hub">`, which collided with this plugin's own
+  // page-level `.resource-hub` rule (`max-width: 1100px; margin: 0 auto;
+  // padding: 1.5em 1em 4em`) and stretched the entire navigation bar. The
+  // `-link` suffix keeps the two namespaces apart; the page rule is
+  // additionally guarded with `div.` — see stylesheets/resource-hub.scss.
   api.addNavigationBarItem({
-    name: "resource-hub",
+    name: "resource-hub-link",
     displayName: i18n("resource_hub.nav_title"),
     href: "/resource-hub",
     title: i18n("resource_hub.title"),

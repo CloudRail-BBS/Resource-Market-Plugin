@@ -1,8 +1,21 @@
-.resource-hub {
+// Page root.
+//
+// Qualified with the element name on purpose. Discourse renders a navigation
+// item's `name` verbatim as a class on its generated <li> — `NavigationItem`
+// does `dConcatClass(..., this.content.name)`. A bare `.resource-hub` rule
+// therefore also matched `<li class="... resource-hub">` in the navigation bar,
+// where `margin: 0 auto` absorbs all the free space in the flex row and
+// `max-width: 1100px` lets it — stretching the entire nav bar.
+//
+// Only the root needs the guard; the BEM children below keep their plain
+// `.resource-hub__*` names.
+div.resource-hub {
   max-width: 1100px;
   margin: 0 auto;
   padding: 1.5em 1em 4em;
+}
 
+.resource-hub {
   &__header {
     display: flex;
     align-items: flex-start;
