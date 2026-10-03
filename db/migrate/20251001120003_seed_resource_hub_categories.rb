@@ -5,13 +5,17 @@
 # Discourse runs exclusively on PostgreSQL, so `ON CONFLICT DO NOTHING` keeps
 # this idempotent if the migration is re-run.
 class SeedResourceHubCategories < ActiveRecord::Migration[7.0]
+  # `name` 是界面上显示的名称，使用中文。
+  #
+  # `slug` 保持英文且不要改动：它既是 URL 标识，也是 `ON CONFLICT (slug)` 的
+  # 依据。改掉 slug 会在已安装的站点上插入一批重复分类而不是改名。
   CATEGORIES = [
-    { name: "Plugins", slug: "plugins", color: "E45735", icon: "plug", position: 0 },
-    { name: "Themes", slug: "themes", color: "25AAE2", icon: "palette", position: 1 },
-    { name: "Tools", slug: "tools", color: "0E76FD", icon: "wrench", position: 2 },
-    { name: "Docs & Guides", slug: "docs", color: "9EB83B", icon: "book", position: 3 },
-    { name: "Datasets", slug: "datasets", color: "8C6DE4", icon: "database", position: 4 },
-    { name: "Other", slug: "other", color: "919191", icon: "box", position: 5 },
+    { name: "插件", slug: "plugins", color: "E45735", icon: "plug", position: 0 },
+    { name: "主题", slug: "themes", color: "25AAE2", icon: "palette", position: 1 },
+    { name: "工具", slug: "tools", color: "0E76FD", icon: "wrench", position: 2 },
+    { name: "文档与教程", slug: "docs", color: "9EB83B", icon: "book", position: 3 },
+    { name: "数据集", slug: "datasets", color: "8C6DE4", icon: "database", position: 4 },
+    { name: "其他", slug: "other", color: "919191", icon: "box", position: 5 },
   ].freeze
 
   def up

@@ -9,12 +9,15 @@ plugins:
     default: true
     client: true
 
+  # 这两个默认值会直接显示在页面上，所以使用中文。
+  # 注意：已经保存过的站点设置不会被默认值覆盖，升级后若要生效需在后台
+  # 「设置 → 插件」里重置这两项。
   resource_hub_title:
-    default: "Resource Hub"
+    default: "资源中心"
     client: true
 
   resource_hub_description:
-    default: "Download community resources, or upload your own."
+    default: "下载社区共享的资源，或者上传你自己的。"
     client: true
 
   # Maximum size, in KB, of a single uploaded resource file.
