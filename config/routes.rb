@@ -1,19 +1,6 @@
 # frozen_string_literal: true
 
 # The engine's own routes.
-#
-# The engine is mounted onto the application from `plugin.rb`
-# (`Discourse::Application.routes.append` inside `after_initialize`), NOT from
-# here. That is the pattern discourse-cakeday uses for its top-level /cakeday
-# page, and it matters:
-#
-# `Discourse::Application.routes.draw` CLEARS the application's whole route set
-# before rebuilding it. A plugin's `config/routes.rb` is loaded *before*
-# Discourse's own, so anything mounted with `draw` is wiped when Discourse's
-# routes file is loaded afterwards — `/resource-hub` then 404s on any direct
-# visit or full page load (which is exactly what clicking a nav bar item does,
-# since those render a plain <a href>), while in-app client-side transitions
-# still appear to work. `append` adds to the route set instead of replacing it.
 DiscourseResourceHub::Engine.routes.draw do
   get "/" => "pages#index"
   get "/new" => "pages#index"
@@ -35,4 +22,23 @@ DiscourseResourceHub::Engine.routes.draw do
   post "/github/repo" => "github#link"
   post "/github/repo/sync" => "github#sync"
   delete "/github/repo" => "github#unlink"
+end
+
+# Mount the engine onto the application.
+#
+# This MUST stay in this file, and it must be `draw` — NOT
+# `Discourse::Application.routes.append` from a plugin's `after_initialize`.
+#
+# Rails loads a plugin's `config/routes.rb` through the engine routes reloader
+# while the application's route set is still open. By the time `after_initialize`
+# runs, the route set has already been finalised, and `append` blocks are only
+# evaluated by `finalize!` — so a mount registered there is **never applied**.
+# The engine is silently not mounted and every URL under /resource-hub 404s with
+# "The requested URL or resource could not be found."
+#
+# `draw` is safe here even though it calls `clear!`: Rails has clearing disabled
+# at this point (`@disable_clear_and_finalize`), which is why
+# discourse-data-explorer mounts its engine with exactly this form.
+Discourse::Application.routes.draw do
+  mount ::DiscourseResourceHub::Engine, at: "/resource-hub"
 end

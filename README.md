@@ -153,7 +153,7 @@ discourse-resource-hub/
 │   │   └── resource-hub-route-map.js
 │   └── stylesheets/resource-hub.scss
 ├── config/
-│   ├── routes.rb                   # engine 自身路由（挂载在 plugin.rb 中）
+│   ├── routes.rb                   # engine 自身路由 + 挂载到 /resource-hub
 │   ├── settings.yml
 │   └── locales/{server,client}.{en,zh_CN}.yml
 ├── db/migrate/                     # resources、categories、comments 与分类种子
@@ -222,10 +222,19 @@ flex 行里的全部剩余空间，于是整个导航栏被撑大。现有两道
 - 页面根规则加限定符写成 `div.resource-hub`，因此它永远只能匹配页面容器，
   不可能匹配到 `<li>`。
 
-**5. engine 必须用 `append` 挂载，不能用 `draw`。**
+**5. engine 的挂载必须写在 `config/routes.rb`，而且要用 `draw`。**
 
 ```ruby
-# plugin.rb
+# config/routes.rb
+Discourse::Application.routes.draw do
+  mount ::DiscourseResourceHub::Engine, at: "/resource-hub"
+end
+```
+
+看起来更"安全"的写法其实是坏的：
+
+```ruby
+# plugin.rb —— 不要这样写，挂载永远不会生效
 after_initialize do
   Discourse::Application.routes.append do
     mount ::DiscourseResourceHub::Engine, at: "/resource-hub"
@@ -233,15 +242,17 @@ after_initialize do
 end
 ```
 
-`Discourse::Application.routes.draw` 会**先清空整个应用路由表**再重建。插件的
-`config/routes.rb` 比 Discourse 自己的路由文件**先**加载，所以用 `draw` 注册的
-挂载会在随后被清掉——服务端根本没有 `/resource-hub`。
+Rails 加载插件的 `config/routes.rb` 时，应用的路由表**还处于打开状态**；而
+`after_initialize` 执行时路由表**已经终结**。`append` 注册的块只能由
+`finalize!` 来执行，此时再也不会被调用——engine **静默地从未挂载**，
+`/resource-hub` 下所有 URL 都会 404（"找不到请求的 URL 或资源"）。
 
-症状很有迷惑性：应用内点击（客户端跳转）看起来正常，但**直接访问或刷新会 404**，
-因为那是一次真实的 HTTP 请求。而顶栏导航项渲染的是普通 `<a href>`，点击本身就是
-整页跳转，所以表现为「点了跳不过去」，自然也就无法上传。
+注意：`discourse-cakeday` 确实用了 `append` 写法，但它能工作是因为它的导航入口
+传的是 `route:`（Ember 路由名，客户端跳转），从不触发整页请求；本插件的顶栏入口
+是普通 `<a href>`，点击就是整页跳转，必须由服务端接住。**不要照抄 cakeday 的挂载方式。**
 
-`append` 是追加而非替换。discourse-cakeday 的顶层 `/cakeday` 页面就是这么挂的。
+至于 `draw` 会不会清空路由表：不会。此时 Rails 处于禁止清空的状态
+（`@disable_clear_and_finalize`），官方 `discourse-data-explorer` 用的就是这个写法。
 
 资源中心的入口通过 `addNavigationBarItem` 显示在顶部导航栏。
 
