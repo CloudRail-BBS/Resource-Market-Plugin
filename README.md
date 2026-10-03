@@ -153,7 +153,7 @@ discourse-resource-hub/
 │   │   └── resource-hub-route-map.js
 │   └── stylesheets/resource-hub.scss
 ├── config/
-│   ├── routes.rb                   # engine 路由，挂载在 /resource-hub
+│   ├── routes.rb                   # engine 自身路由（挂载在 plugin.rb 中）
 │   ├── settings.yml
 │   └── locales/{server,client}.{en,zh_CN}.yml
 ├── db/migrate/                     # resources、categories、comments 与分类种子
@@ -221,6 +221,27 @@ flex 行里的全部剩余空间，于是整个导航栏被撑大。现有两道
 - 导航项命名为 `resource-hub-link`，把两个命名空间分开；
 - 页面根规则加限定符写成 `div.resource-hub`，因此它永远只能匹配页面容器，
   不可能匹配到 `<li>`。
+
+**5. engine 必须用 `append` 挂载，不能用 `draw`。**
+
+```ruby
+# plugin.rb
+after_initialize do
+  Discourse::Application.routes.append do
+    mount ::DiscourseResourceHub::Engine, at: "/resource-hub"
+  end
+end
+```
+
+`Discourse::Application.routes.draw` 会**先清空整个应用路由表**再重建。插件的
+`config/routes.rb` 比 Discourse 自己的路由文件**先**加载，所以用 `draw` 注册的
+挂载会在随后被清掉——服务端根本没有 `/resource-hub`。
+
+症状很有迷惑性：应用内点击（客户端跳转）看起来正常，但**直接访问或刷新会 404**，
+因为那是一次真实的 HTTP 请求。而顶栏导航项渲染的是普通 `<a href>`，点击本身就是
+整页跳转，所以表现为「点了跳不过去」，自然也就无法上传。
+
+`append` 是追加而非替换。discourse-cakeday 的顶层 `/cakeday` 页面就是这么挂的。
 
 资源中心的入口通过 `addNavigationBarItem` 显示在顶部导航栏。
 

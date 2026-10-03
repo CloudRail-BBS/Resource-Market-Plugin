@@ -42,6 +42,19 @@ require_relative "lib/discourse_resource_hub/github_sync"
 require_relative "lib/discourse_resource_hub/guardian"
 
 after_initialize do
+  # Mount the engine on the application.
+  #
+  # `append` — never `draw`. `draw` clears the application's entire route set
+  # before rebuilding it, and a plugin's `config/routes.rb` is loaded *before*
+  # Discourse's own, so a mount registered with `draw` is wiped moments later.
+  # The engine would then be unreachable on any direct visit or full page load
+  # while in-app client-side transitions still appeared to work.
+  #
+  # discourse-cakeday mounts its top-level /cakeday page exactly this way.
+  Discourse::Application.routes.append do
+    mount ::DiscourseResourceHub::Engine, at: "/resource-hub"
+  end
+
   # Lets the client short-circuit before requesting hub data at all.
   add_to_serializer(:site, :resource_hub_enabled) { SiteSetting.resource_hub_enabled }
 
