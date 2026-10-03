@@ -24,5 +24,5 @@ DiscourseResourceHub::Engine.routes.draw do
 end
 
 Discourse::Application.routes.draw do
-  mount ::DiscourseResourceHub::Engine, at: "resource-hub"
+  mount ::DiscourseResourceHub::Engine, at: "/resource-hub"
 end

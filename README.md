@@ -127,8 +127,10 @@ discourse-resource-hub/
 │   ├── javascripts/discourse/
 │   │   ├── api-initializers/init-resource-hub.js
 │   │   ├── components/            # resource-hub-{card,uploader,github-picker}.gjs
-│   │   ├── controllers/
-│   │   ├── routes/
+│   │   ├── controllers/resource-hub/{index,new,show}.js
+│   │   ├── routes/resource-hub.js # parent (pass-through)
+│   │   ├── routes/resource-hub/{index,new,show}.js
+│   │   ├── templates/resource-hub.gjs        # parent, renders {{outlet}}
 │   │   ├── templates/resource-hub/{index,new,show}.gjs
 │   │   └── resource-hub-route-map.js
 │   └── stylesheets/resource-hub.scss
@@ -151,6 +153,56 @@ autoloaded and **must** be. Mixing the two makes Zeitwerk and the explicit
 require fight over the same constants and fails the whole boot, so `lib/` is
 deliberately kept out of `config.autoload_paths`. The trade-off is that changes
 under `lib/` need a server restart instead of hot reloading.
+
+### Routing: three rules that are easy to get wrong
+
+The Ember routes are the part of this plugin most likely to break silently, so
+they are spelled out here.
+
+**1. A top-level route map must export a function, not an object.**
+`frontend/discourse/app/mapping-router.js` collects every `*-route-map.js` and
+applies it in one of two ways:
+
+```js
+if (typeof mapObj === "function") {
+  tree.extract(mapObj);                       // called with the tree root as `this`
+} else {
+  extras.push(mapObj);
+}
+// later…
+extras.forEach((extra) => {
+  let node = tree.findPath(extra.resource);   // look up an EXISTING node
+  if (node) { node.extract(extra.map); }      // ← not found: dropped, no error
+});
+```
+
+So the object form (`{ resource: "admin", map() {} }`) only *mounts onto a node
+that already exists* — `admin`, `user`, and so on. Because `resource-hub` is a
+brand new top-level route there is nothing to mount onto, and an object form
+would be **discarded without any error**: the route would simply never exist and
+the URL would fall through to the catch-all 404. This file therefore exports a
+function, exactly as core does in `app/routes/app-route-map.js` and as
+discourse-cakeday does for `/cakeday`.
+
+**2. File paths mirror the route name.** Ember resolves `a.b.c` to
+`routes/a/b/c.js` — a nested directory, not a flattened `a-b-c.js`. A parent
+route also owns its own file, and its template must render an `{{outlet}}`, or
+the children have nowhere to render and the page comes up blank:
+
+| Route name | Route | Controller | Template |
+| --- | --- | --- | --- |
+| `resource-hub` | `routes/resource-hub.js` | — | `templates/resource-hub.gjs` (holds `{{outlet}}`) |
+| `resource-hub.index` | `routes/resource-hub/index.js` | `controllers/resource-hub/index.js` | `templates/resource-hub/index.gjs` |
+| `resource-hub.new` | `routes/resource-hub/new.js` | `controllers/resource-hub/new.js` | `templates/resource-hub/new.gjs` |
+| `resource-hub.show` | `routes/resource-hub/show.js` | `controllers/resource-hub/show.js` | `templates/resource-hub/show.gjs` |
+
+**3. Child paths are relative.** `{ path: "r/:slug" }` inside `resource-hub`
+resolves to `/resource-hub/r/:slug`, matching the server routes in
+`config/routes.rb`.
+
+The hub is reachable from both navigation surfaces: `addCommunitySectionLink`
+(sidebar, the default `navigation_menu`) and `addNavigationBarItem`
+(`header`/`legacy`).
 
 ### Request flow
 

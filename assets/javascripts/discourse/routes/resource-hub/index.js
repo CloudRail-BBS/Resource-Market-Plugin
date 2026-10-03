@@ -1,9 +1,9 @@
-import Route from "@ember/routing/route";
+import DiscourseRoute from "discourse/routes/discourse";
 import { ajax } from "discourse/lib/ajax";
 import { action } from "@ember/object";
 import { service } from "@ember/service";
 
-export default class ResourceHubIndexRoute extends Route {
+export default class ResourceHubIndexRoute extends DiscourseRoute {
   @service router;
   @service siteSettings;
 

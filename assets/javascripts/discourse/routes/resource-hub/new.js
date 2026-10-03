@@ -1,7 +1,7 @@
-import Route from "@ember/routing/route";
+import DiscourseRoute from "discourse/routes/discourse";
 import { ajax } from "discourse/lib/ajax";
 
-export default class ResourceHubNewRoute extends Route {
+export default class ResourceHubNewRoute extends DiscourseRoute {
   model() {
     return ajax("/resource-hub/resources.json", { data: { per_page: 1 } }).then((result) => ({
       categories: result.categories || [],
