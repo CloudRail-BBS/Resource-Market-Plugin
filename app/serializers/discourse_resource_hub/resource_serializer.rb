@@ -46,6 +46,21 @@ module ::DiscourseResourceHub
       object.upload&.original_filename
     end
 
+    # ActiveModel::Serialization reads each declared attribute with `send(name)`
+    # (activemodel/lib/active_model/serialization.rb: `send(key)`), and
+    # ActiveRecord does not override that. So an attribute must resolve to a
+    # column, a model method, or a reader defined here.
+    #
+    # The model exposes `external?`, not `external`. Without this reader the
+    # `:external` attribute below raises
+    #   NoMethodError: undefined method 'external' for an instance of
+    #   DiscourseResourceHub::Resource
+    # and EVERY hub endpoint 500s — index, show and create all serialise this
+    # class — which presents as "the page loads but nothing works".
+    def external
+      object.external?
+    end
+
     def repository
       object.repository?
     end
