@@ -3,6 +3,7 @@
 module ::DiscourseResourceHub
   class ResourcesController < ::ApplicationController
     requires_plugin PLUGIN_NAME
+    include DiscourseResourceHub::SerializationHelpers
 
     before_action :ensure_enabled
     before_action :ensure_logged_in, only: %i[create update destroy review]
@@ -80,7 +81,7 @@ module ::DiscourseResourceHub
 
     def show
       render json: {
-               resource: serialize_data(@resource, ResourceSerializer),
+               resource: serialize_one(@resource, ResourceSerializer),
                comments: serialize_data(@resource.comments.includes(:user).chronological, CommentSerializer),
                can_manage: resource_guardian.can_manage?(@resource),
              }
@@ -117,7 +118,7 @@ module ::DiscourseResourceHub
 
       resource.save!
       Category.find_by(id: resource.category_id)&.count_resources
-      render json: { resource: serialize_data(resource, ResourceSerializer) }, status: :created
+      render json: { resource: serialize_one(resource, ResourceSerializer) }, status: :created
     rescue ActiveRecord::RecordInvalid => e
       render_json_error(e.record.errors.full_messages.join(", "), status: 422)
     rescue GithubClient::Error => e
@@ -134,7 +135,7 @@ module ::DiscourseResourceHub
       @resource.save!
 
       Category.where(id: [old_category_id, @resource.category_id].compact.uniq).each(&:count_resources)
-      render json: { resource: serialize_data(@resource, ResourceSerializer) }
+      render json: { resource: serialize_one(@resource, ResourceSerializer) }
     rescue ActiveRecord::RecordInvalid => e
       render_json_error(e.record.errors.full_messages.join(", "), status: 422)
     end
@@ -151,7 +152,7 @@ module ::DiscourseResourceHub
 
       @resource.update!(status: status)
       @resource.category&.count_resources
-      render json: { resource: serialize_data(@resource, ResourceSerializer) }
+      render json: { resource: serialize_one(@resource, ResourceSerializer) }
     end
 
     def destroy

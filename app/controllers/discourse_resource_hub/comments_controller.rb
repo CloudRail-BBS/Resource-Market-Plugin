@@ -3,6 +3,7 @@
 module ::DiscourseResourceHub
   class CommentsController < ::ApplicationController
     requires_plugin PLUGIN_NAME
+    include DiscourseResourceHub::SerializationHelpers
 
     before_action :ensure_enabled
     before_action :fetch_resource
@@ -24,7 +25,7 @@ module ::DiscourseResourceHub
 
       RateLimiter.new(current_user, "resource-hub-comments", 20, 1.minute).performed!
       comment.save!
-      render json: { comment: serialize_data(comment, CommentSerializer) }, status: :created
+      render json: { comment: serialize_one(comment, CommentSerializer) }, status: :created
     rescue ActiveRecord::RecordInvalid => e
       render_json_error(e.record.errors.full_messages.join(", "), status: 422)
     end

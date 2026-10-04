@@ -3,6 +3,7 @@
 module ::DiscourseResourceHub
   class GithubController < ::ApplicationController
     requires_plugin PLUGIN_NAME
+    include DiscourseResourceHub::SerializationHelpers
 
     # Every GitHub endpoint requires a session. The search endpoint proxies the
     # shared GitHub API quota (60 req/h anonymous, 5000 with a token), so leaving
@@ -47,7 +48,7 @@ module ::DiscourseResourceHub
       raise Discourse::InvalidAccess unless DiscourseResourceHub::Guardian.new(current_user).can_upload?
 
       resource = GithubSync.import_repository(params[:repo], user: current_user)
-      render json: { resource: serialize_data(resource, ResourceSerializer) }, status: :created
+      render json: { resource: serialize_one(resource, ResourceSerializer) }, status: :created
     rescue GithubClient::Error => e
       render_json_error(e.message, status: e.not_found? ? 404 : 422)
     rescue ActiveRecord::RecordInvalid => e
