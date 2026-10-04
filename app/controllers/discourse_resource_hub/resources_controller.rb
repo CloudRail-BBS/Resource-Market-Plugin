@@ -163,8 +163,27 @@ module ::DiscourseResourceHub
     end
 
     # The download endpoint never accepts a caller-supplied URL. A repository
-    # points at a canonical GitHub URL and a file uses Discourse's storage API
-    # (which signs secure S3 URLs instead of exposing their raw object path).
+    # points at a canonical GitHub URL and a file resolves through Discourse's
+    # own storage layer.
+    #
+    # IMPORTANT: `Discourse.store.url_for` only exists on `FileStore::S3Store`.
+    # `FileStore::BaseStore` does not define it at all, so on a site using local
+    # storage the call raises NoMethodError and the endpoint 500s — which is
+    # exactly what an internal upload hit before this branch existed.
+    #
+    # Core's `UploadsController#show` handles the same split:
+    #
+    #   if Discourse.store.internal?
+    #     send_file_local_upload(upload)          # local: serve the file
+    #   else
+    #     redirect_to Discourse.store.url_for(upload, force_download: force_download?)
+    #   end
+    #
+    # We cannot `send_file` here because the frontend expects a JSON
+    # `redirect_url`, so the local branch returns `upload.url` instead — that is
+    # the same relative path (`/uploads/default/original/…`) that
+    # `UploadSerializer` exposes as `:url`, and the browser resolves it against
+    # the forum's own host.
     def download
       if @resource.external?
         url = @resource.repo_url
@@ -172,7 +191,7 @@ module ::DiscourseResourceHub
         if current_user.blank? && SiteSetting.prevent_anons_from_downloading_files
           raise Discourse::InvalidAccess
         end
-        url = Discourse.store.url_for(@resource.upload, force_download: true)
+        url = download_url_for(@resource.upload)
       else
         return render_json_error(I18n.t("resource_hub.errors.resource_not_found"), status: 404)
       end
@@ -184,6 +203,14 @@ module ::DiscourseResourceHub
     end
 
     private
+
+    def download_url_for(upload)
+      return Discourse.store.url_for(upload, force_download: true) unless Discourse.store.internal?
+
+      # Local storage. `upload.url` is already a root-relative path; make sure it
+      # is absolute so the frontend can open it in a new tab without guessing.
+      upload.url.to_s.start_with?("http") ? upload.url : "#{Discourse.base_url}#{upload.url}"
+    end
 
     def ensure_enabled
       raise Discourse::NotFound unless SiteSetting.resource_hub_enabled
