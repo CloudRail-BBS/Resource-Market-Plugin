@@ -263,9 +263,39 @@ Rails 加载插件的 `config/routes.rb` 时，应用的路由表**还处于打�
    随后 Ember 启动并接管路由。
 3. 数据一律来自 JSON API —— 例如 `GET /resource-hub/resources.json` 会分发到
    `ResourcesController#index`。
-4. 控制器使用 `ActiveModel::Serializer` 序列化（Discourse 会把当前的 `Guardian`
+4. 控制器使用与核心一致的序列化基类（Discourse 会把当前的 `Guardian`
    作为序列化器的 `scope` 注入）。
 5. Ember 渲染对应的 `.gjs` 模板。
+
+#### 页面路由**不要**判断 `request.format`
+
+`PagesController#index` 里只检查 `SiteSetting.resource_hub_enabled`，
+**没有** `raise Discourse::NotFound unless request.format.html?` 这类格式判断。
+
+Discourse 并非只用整页请求驱动页面路由：`ApplicationController` 带有
+`before_action :preload_json` 与 `before_action :check_xhr`，Ember 也会用
+JSON accept 的 XHR 请求即将渲染的路由。因此在 action 内部判断格式是错的 ——
+一个完全正常的预加载 XHR 会带着 JSON accept 进来，判断失败、抛
+`Discourse::NotFound`，页面就以「找不到请求的 URL 或资源」404。
+它的**特征**很好认：响应头 `X-Discourse-Route` 指向**你自己的控制器**，
+但状态码是 404，例如
+
+```
+X-Discourse-Route: discourse_resource_hub/pages/index
+HTTP/1.1 404 Not Found
+```
+
+判断方法：同一个 URL 换 accept 头请求一次。
+
+```
+GET /resource-hub/  Accept: text/html   →  200     # 整页导航
+GET /resource-hub/  JSON / 默认 accept  →  404     # Discourse 的预加载 XHR
+```
+
+要挡住 JSON 请求应该用 Discourse 的机制 `before_action :check_xhr`，
+而页面路由则用 `skip_before_action :check_xhr, only: :index` 重新放行 ——
+这也正是本插件采用的写法。官方插件（如 `discourse-data-explorer`）
+同样不做任何 format 判断。
 
 ### API 接口
 
