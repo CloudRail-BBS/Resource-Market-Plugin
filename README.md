@@ -6,8 +6,7 @@
 ## 功能
 
 - **上传** —— 拖放文件，按扩展名与体积双重白名单校验。
-- **下载** —— 下载接口会统计下载次数，并返回存储地址（启用 secure uploads 时
-  为签名地址）。
+- **下载** —— 下载接口会统计下载次数，并返回文件的绝对地址。
 - **GitHub 集成** —— 搜索 GitHub、关联仓库，导入元数据（star、fork、issue、
   语言、许可证）以及发布版本与版本附件，并由定时任务保持更新。
 - **分类与标签** —— 内置种子分类，另有自由填写的标签，可在工具栏筛选。
@@ -318,14 +317,42 @@ GET /resource-hub/  JSON / 默认 accept  →  404     # Discourse 的预加载 
 
 ## 安全说明
 
-- **上传**走 Discourse 自身的 `POST /uploads.json`，因此 CSRF 防护、存储后端
-  （本地或 S3）以及 `Upload` 记录的行为与站内其他地方完全一致。资源中心还会在
-  服务端二次校验扩展名与体积，并拒绝属于其他成员的 `upload_id`。
-- **下载**从不接受调用方传入的 URL。仓库解析为其规范的 GitHub 地址；文件则经
-  `Discourse.store.url_for` 解析，启用 secure uploads 时返回签名地址。
+- **上传**走 Discourse 自身的 `POST /uploads.json`，因此 CSRF 防护、`Upload`
+  记录以及后续的存取行为与站内其他地方完全一致。资源中心还会在服务端二次校验
+  扩展名与体积，并拒绝属于其他成员的 `upload_id`。
+- **下载**从不接受调用方传入的 URL。仓库解析为其规范的 GitHub 地址；文件则通过
+  `upload.url` 得到站内的绝对地址（见下方「存储：仅支持本地存储」）。
 - **可见性** —— 待审核与已拒绝的资源只有作者和管理员可读取，评论等所有接口
   都遵循这一规则。
 - **审核流转**仅限管理员，因此作者无法自己通过自己的提交。
+
+### 存储：仅支持本地存储
+
+本插件**只面向 Discourse 的本地存储**（未启用 S3 上传）。这是一个有意的范围约定，
+因为 S3 专用的接口在本地存储上并不存在。
+
+`Discourse.store.url_for` 与 `signed_url_for_path` **只定义在 `FileStore::S3Store`
+上**。`FileStore::BaseStore` 里根本没有它们（也没有 `not_implemented` 兜底），
+所以在使用本地存储的论坛上调用会直接抛 `NoMethodError`，接口报 500 —— 这正是
+下载接口此前 500 的原因。
+
+核心 `UploadsController#show` 会用 `Discourse.store.internal?` 分支来兼容两种后端。
+本插件不采用这种做法：那会留下一条在目标环境**永远不会被执行、因而也永远无法被验证**
+的代码路径。下载接口只走一条路：
+
+```ruby
+def local_download_url(upload)
+  path = upload.url.to_s
+  return path if path.start_with?("http")
+
+  "#{Discourse.base_url}#{path}"
+end
+```
+
+`upload.url` 就是 `UploadSerializer` 作为 `:url` 暴露的那个相对路径
+（`/uploads/default/original/…`），补上站点主机名即可。
+
+校验脚本会直接禁止代码中出现 S3 专用接口，而不是要求它们加守卫。
 - **GitHub 相关接口全部要求登录**，因为它们消耗的是站点共享的 API 配额。搜索
   接口还额外按用户限流。
 - **关联仓库**使用与上传相同的权限校验，并且拒绝接管已经属于他人资源的仓库。

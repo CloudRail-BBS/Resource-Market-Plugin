@@ -163,27 +163,20 @@ module ::DiscourseResourceHub
     end
 
     # The download endpoint never accepts a caller-supplied URL. A repository
-    # points at a canonical GitHub URL and a file resolves through Discourse's
-    # own storage layer.
+    # points at a canonical GitHub URL, and a file resolves through the forum's
+    # own local storage.
     #
-    # IMPORTANT: `Discourse.store.url_for` only exists on `FileStore::S3Store`.
-    # `FileStore::BaseStore` does not define it at all, so on a site using local
-    # storage the call raises NoMethodError and the endpoint 500s — which is
-    # exactly what an internal upload hit before this branch existed.
+    # This plugin targets **local storage only**. That is a deliberate scoping
+    # decision, and it removes a real hazard: `Discourse.store.url_for` and
+    # `signed_url_for_path` are defined *only* on `FileStore::S3Store`.
+    # `FileStore::BaseStore` does not define them at all — there is no
+    # `not_implemented` stub — so on a locally-stored forum the call raises
+    # NoMethodError and the endpoint 500s. Branching on
+    # `Discourse.store.internal?` would fix that, but it would also leave a
+    # code path that can never be exercised here and therefore never verified.
     #
-    # Core's `UploadsController#show` handles the same split:
-    #
-    #   if Discourse.store.internal?
-    #     send_file_local_upload(upload)          # local: serve the file
-    #   else
-    #     redirect_to Discourse.store.url_for(upload, force_download: force_download?)
-    #   end
-    #
-    # We cannot `send_file` here because the frontend expects a JSON
-    # `redirect_url`, so the local branch returns `upload.url` instead — that is
-    # the same relative path (`/uploads/default/original/…`) that
-    # `UploadSerializer` exposes as `:url`, and the browser resolves it against
-    # the forum's own host.
+    # A local upload's URL is simply `upload.url`: the same root-relative path
+    # (`/uploads/default/original/…`) that `UploadSerializer` exposes as `:url`.
     def download
       if @resource.external?
         url = @resource.repo_url
@@ -191,7 +184,7 @@ module ::DiscourseResourceHub
         if current_user.blank? && SiteSetting.prevent_anons_from_downloading_files
           raise Discourse::InvalidAccess
         end
-        url = download_url_for(@resource.upload)
+        url = local_download_url(@resource.upload)
       else
         return render_json_error(I18n.t("resource_hub.errors.resource_not_found"), status: 404)
       end
@@ -204,12 +197,16 @@ module ::DiscourseResourceHub
 
     private
 
-    def download_url_for(upload)
-      return Discourse.store.url_for(upload, force_download: true) unless Discourse.store.internal?
+    # Absolute URL for a locally stored upload.
+    #
+    # `upload.url` is already root-relative, so it only needs the forum's host
+    # prepended — doing that here means the frontend can `window.open` the value
+    # without knowing anything about the site.
+    def local_download_url(upload)
+      path = upload.url.to_s
+      return path if path.start_with?("http")
 
-      # Local storage. `upload.url` is already a root-relative path; make sure it
-      # is absolute so the frontend can open it in a new tab without guessing.
-      upload.url.to_s.start_with?("http") ? upload.url : "#{Discourse.base_url}#{upload.url}"
+      "#{Discourse.base_url}#{path}"
     end
 
     def ensure_enabled
