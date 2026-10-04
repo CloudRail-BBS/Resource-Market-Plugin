@@ -4,6 +4,8 @@ import { action } from "@ember/object";
 import { service } from "@ember/service";
 import { ajax } from "discourse/lib/ajax";
 import { popupAjaxError } from "discourse/lib/ajax-error";
+import { i18n as I18n } from "discourse-i18n";
+import { resourceSegment } from "../../lib/resource-hub-resource-key";
 
 export default class ResourceHubIndexController extends Controller {
   @service router;
@@ -106,14 +108,16 @@ export default class ResourceHubIndexController extends Controller {
 
   @action
   async download(resource) {
+    const key = resourceSegment(resource);
+    if (!key) {
+      popupAjaxError(new Error(I18n.t("resource_hub.errors.generic")));
+      return;
+    }
+
     try {
-      // Keyed by slug, not id — ResourcesController#fetch_resource accepts
-      // either, and a payload without `id` would otherwise request
-      // /resource-hub/resources/undefined/download.json.
-      const result = await ajax(
-        `/resource-hub/resources/${resource.slug ?? resource.id}/download.json`,
-        { type: "POST" }
-      );
+      const result = await ajax(`/resource-hub/resources/${key}/download.json`, {
+        type: "POST",
+      });
       if (result.redirect_url) {
         window.open(result.redirect_url, "_blank", "noopener,noreferrer");
       }

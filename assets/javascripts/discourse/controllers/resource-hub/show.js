@@ -5,6 +5,7 @@ import { service } from "@ember/service";
 import { ajax } from "discourse/lib/ajax";
 import { popupAjaxError } from "discourse/lib/ajax-error";
 import { i18n } from "discourse-i18n";
+import { resourceSegment } from "../../lib/resource-hub-resource-key";
 
 export default class ResourceHubShowController extends Controller {
   @service router;
@@ -22,14 +23,22 @@ export default class ResourceHubShowController extends Controller {
   // ResourcesController#fetch_resource resolves a slug or a numeric id, and
   // `slug` is always present in the payload — whereas a payload missing `id`
   // silently produces `/resource-hub/resources/undefined.json`, which 404s with
-  // "The requested URL or resource could not be found." A slug can never be
-  // `undefined`, so this removes the whole failure mode.
+  // "The requested URL or resource could not be found."
+  //
+  // `resourceKey` returns null (never the string "undefined") when the payload
+  // carries neither field, so callers can bail out instead of issuing a request
+  // to a URL that cannot exist.
   get resourceKey() {
-    return this.resource?.slug ?? this.resource?.id;
+    return resourceSegment(this.resource);
   }
 
   @action
   async download() {
+    if (!this.resourceKey) {
+      popupAjaxError(new Error(i18n("resource_hub.errors.generic")));
+      return;
+    }
+
     try {
       const result = await ajax(
         `/resource-hub/resources/${this.resourceKey}/download.json`,
@@ -51,7 +60,7 @@ export default class ResourceHubShowController extends Controller {
 
   @action
   async postComment() {
-    if (!this.newComment.trim()) {
+    if (!this.newComment.trim() || !this.resourceKey) {
       return;
     }
     this.posting = true;
@@ -71,6 +80,9 @@ export default class ResourceHubShowController extends Controller {
 
   @action
   async deleteComment(comment) {
+    if (!this.resourceKey) {
+      return;
+    }
     if (!(await this.dialog.deleteConfirm({ message: i18n("resource_hub.comments.confirm_delete") }))) {
       return;
     }
@@ -87,6 +99,9 @@ export default class ResourceHubShowController extends Controller {
 
   @action
   async deleteResource() {
+    if (!this.resourceKey) {
+      return;
+    }
     if (!(await this.dialog.deleteConfirm({ message: i18n("resource_hub.confirm_delete") }))) {
       return;
     }
